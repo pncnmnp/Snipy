@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+	<meta charset="utf-8">
+	<meta name="author" content="parth_parikh">
+	<meta name="description" content="url shortner">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>url shortner</title>
+	<link rel="stylesheet" type="text/css" href="../static/style.css">
+	<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+</head>
+
+<body>
+	<center><b>Url Shortner</b></center>
+
+	<br><br>
+
+	<form method="post" autocomplete="off">
+		<div class="query">
+			<label for="query"></label>
+			<input type="text" id="query" name="query" autofocus="autofocus">
+		</div>
+
+		<div class="query-request">
+			<br>
+			<button type="submit">Shorten</button>
+		</div>
+	</form>
+
+	<br>
+	{% if name %}
+		<b>Shortened link:</b> <a href="{{name}}" target="_blank">{{ name }}</a>
+	{% endif %}
+
+</body>
+</html>

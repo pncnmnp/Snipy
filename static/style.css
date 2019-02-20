@@ -1,0 +1,48 @@
+div.query {
+	text-align: center;
+}
+
+div.query-request {
+	text-align: center;
+}
+
+body {
+	text-align: center;
+}
+
+input {
+	background-color: #F5F5F5;
+	color: black;
+	width: 600px;
+	height: 30px;
+	font-size:14px;
+	outline-width: 0;
+	font-family: courier;
+	border: 2px solid #000000;	
+}
+
+button {
+	background-color: white;
+	color: black;
+	border: 6px solid #0000;
+}
+
+button:hover {
+	background-color: black;
+	color: white;
+}
+
+a {
+	color: tomato;
+	text-decoration: none;
+}
+
+a::selection {
+	color: white;
+	background: tomato;
+}
+
+a::-moz-selection {
+	color: white;
+	background: tomato;
+}
