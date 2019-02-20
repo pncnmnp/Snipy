@@ -10,7 +10,7 @@ class urlShortner:
 		self.url = " "
 		self.flag = False
 		self.uid = 0
-		self.base = "https://par.th/"
+		self.base = "http://127.0.0.1:5000/"
 
 	def getUrl(self):
 		self.url = input(colored('enter a url: ', 'white'))
@@ -89,5 +89,6 @@ class urlShortner:
 		self.shortenUrl()
 		self.dbFetchStore() # for storing shortened link
 
-obj = urlShortner()
-obj.execution()
+if __name__ == '__main__':
+	obj = urlShortner()
+	obj.execution()
