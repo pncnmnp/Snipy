@@ -61,22 +61,27 @@ class urlShortner:
 						(uid INTEGER PRIMARY KEY, 
 						old_link TEXT, 
 						new_link TEXT)''')
-			count = c.execute("SELECT COUNT(old_link) FROM links WHERE old_link=?", (self.url,)).fetchone()[0]
+			count_old = c.execute("SELECT COUNT(old_link) FROM links WHERE old_link=?", (self.url,)).fetchone()[0]
+			count_new = c.execute("SELECT COUNT(new_link) FROM links WHERE new_link=?", (self.url,)).fetchone()[0]
 
-			if count > 0:
+			if count_old > 0:
 				return (False, c.execute("SELECT new_link FROM links WHERE old_link=?", (self.url,)).fetchone()[0])
+			elif count_new > 0:	
+				return (False, self.url)
 
 			c.execute("INSERT INTO links (old_link, new_link) VALUES (?,?)", (self.url, ' '))
 
 			self.uid = c.execute("SELECT uid FROM links WHERE old_link=?", (self.url,)).fetchone()[0]
+			conn.commit()
+			conn.close()
 
 			return (True, None)
 
 		elif self.flag == True:
 			c.execute("UPDATE links SET new_link=? WHERE uid=?", (self.base, self.uid))
 
-		conn.commit()
-		conn.close()
+			conn.commit()
+			conn.close()
 
 	def shortenUrl(self):
 		uid = self.uid

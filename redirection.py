@@ -27,25 +27,28 @@ def direct(name):
 		return redirect(link, code=302)
 
 	except:
-		return "ERROR 404: link does not exist"
+		return "ERROR 404: link does not exist<br/>looks like you have gone crazy 😜"
 
 @app.route('/', methods=['POST', 'GET'])
 def index():
 	error = None
 	if request.method == 'POST':
 		if request.form['query']:
-			s_obj = shorten.urlShortner()
-			url = request.form['query']
-			s_obj.url = url;
-			check = s_obj.dbFetchStore() # for fetching uid
-			if check[0] == True:
-				s_obj.shortenUrl()
-				s_obj.dbFetchStore() # for storing shortened link
+			try:
+				s_obj = shorten.urlShortner()
+				url = request.form['query']
+				s_obj.url = url.strip();
+				check = s_obj.dbFetchStore() # for fetching uid
+				if check[0] == True:
+					s_obj.shortenUrl()
+					s_obj.dbFetchStore() # for storing shortened link
 
-				return render_template('index.html', name=s_obj.base)
+					return render_template('index.html', name=s_obj.base)
 
-			elif check[0] == False:
-				return render_template('index.html', other="link is already shortened: ", val=check[1])
+				elif check[0] == False:
+					return render_template('index.html', other="link is already shortened: ", val=check[1])
+			except:
+				return "ERROR 500: internal server error<br/>looks like i have gone crazy 😭"
 			
 	return render_template('index.html', error=error)
 
