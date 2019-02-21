@@ -2,21 +2,32 @@ from flask import Flask, redirect, request, render_template
 import sqlite3
 import shorten
 
+"""
+to run server :
+	export FLASK_APP=redirection.py
+	flask run
+"""
+
 app = Flask(__name__)
 
-@app.route('/<name>', methods=['POST', 'GET'])
+@app.route('/<name>', methods=['GET'])
 def direct(name):
 	base = shorten.urlShortner().base
 
 	conn = sqlite3.connect('./links.db')
 	c = conn.cursor()
 
-	link = c.execute("SELECT old_link FROM links WHERE new_link=?", (base+name,)).fetchone()[0]
+	error = None
+	try:
+		link = c.execute("SELECT old_link FROM links WHERE new_link=?", (base+name,)).fetchone()[0]
 
-	conn.commit()
-	conn.close()
+		conn.commit()
+		conn.close()
 
-	return redirect(link, code=302)
+		return redirect(link, code=302)
+
+	except:
+		return render_template('index.html', error=error)	
 
 @app.route('/', methods=['POST', 'GET'])
 def index():
@@ -31,6 +42,7 @@ def index():
 			s_obj.dbFetchStore() # for storing shortened link
 
 			return render_template('index.html', name=s_obj.base)
+			
 	return render_template('index.html', error=error)
 
 if __name__ == '__main__':

@@ -5,6 +5,15 @@ import sqlite3
 import string
 from termcolor import colored
 
+"""
+future features:
+>> verify duplicate links
+>> auto expiry of url
+>> bulk url conversion
+>> copy to clipboard
+>> spam detection
+"""
+
 class urlShortner:
 	def __init__(self):
 		self.url = " "

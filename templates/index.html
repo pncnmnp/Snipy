@@ -31,8 +31,19 @@
 	</form>
 
 	<br>
+
+	<script>
+		function copyToClipboard(text) {
+			window.prompt("Copy to clipboard: Ctrl+C, Enter", text);
+		}
+	</script>
+
 	{% if name %}
-		<b>Shortened link:</b> <a href="{{name}}" target="_blank">{{ name }}</a>
+		<b>Shortened link:</b> 
+			<a id='copy' href="{{name}}" target="_blank">{{ name }}</a>
+			<br>
+			<br>
+			<button id="copy" onclick="copyToClipboard(document.getElementById('copy').innerHTML)">copy link</button>
 	{% endif %}
 
 </body>
