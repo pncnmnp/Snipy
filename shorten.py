@@ -7,10 +7,10 @@ from termcolor import colored
 
 """
 future features:
->> verify duplicate links
+>> verify duplicate links [ done ]
 >> auto expiry of url
 >> bulk url conversion
->> copy to clipboard
+>> copy to clipboard [ done ]
 >> spam detection
 """
 
@@ -61,9 +61,16 @@ class urlShortner:
 						(uid INTEGER PRIMARY KEY, 
 						old_link TEXT, 
 						new_link TEXT)''')
+			count = c.execute("SELECT COUNT(old_link) FROM links WHERE old_link=?", (self.url,)).fetchone()[0]
+
+			if count > 0:
+				return (False, c.execute("SELECT new_link FROM links WHERE old_link=?", (self.url,)).fetchone()[0])
+
 			c.execute("INSERT INTO links (old_link, new_link) VALUES (?,?)", (self.url, ' '))
 
 			self.uid = c.execute("SELECT uid FROM links WHERE old_link=?", (self.url,)).fetchone()[0]
+
+			return (True, None)
 
 		elif self.flag == True:
 			c.execute("UPDATE links SET new_link=? WHERE uid=?", (self.base, self.uid))
@@ -90,6 +97,9 @@ class urlShortner:
 		self.flag = True
 
 		print(colored("shortened link: ", "white"), colored(self.base, "red"))
+
+	def auto_expiry(self):
+		pass	
 
 	def execution(self):
 		self.getUrl()

@@ -46,5 +46,10 @@
 			<button id="copy" onclick="copyToClipboard(document.getElementById('copy').innerHTML)">copy link</button>
 	{% endif %}
 
+	{% if other %}
+		<center><b>{{ other }}</b></center>
+		<a href="{{val}}" target="_blank">{{ val }}</a>
+	{% endif %}
+
 </body>
 </html>

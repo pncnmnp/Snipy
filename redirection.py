@@ -27,7 +27,7 @@ def direct(name):
 		return redirect(link, code=302)
 
 	except:
-		return render_template('index.html', error=error)	
+		return "ERROR 404: link does not exist"
 
 @app.route('/', methods=['POST', 'GET'])
 def index():
@@ -37,11 +37,15 @@ def index():
 			s_obj = shorten.urlShortner()
 			url = request.form['query']
 			s_obj.url = url;
-			s_obj.dbFetchStore() # for fetching uid
-			s_obj.shortenUrl()
-			s_obj.dbFetchStore() # for storing shortened link
+			check = s_obj.dbFetchStore() # for fetching uid
+			if check[0] == True:
+				s_obj.shortenUrl()
+				s_obj.dbFetchStore() # for storing shortened link
 
-			return render_template('index.html', name=s_obj.base)
+				return render_template('index.html', name=s_obj.base)
+
+			elif check[0] == False:
+				return render_template('index.html', other="link is already shortened: ", val=check[1])
 			
 	return render_template('index.html', error=error)
 
