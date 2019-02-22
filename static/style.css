@@ -10,10 +10,21 @@ body {
 	text-align: center;
 }
 
-input {
+input#query {
 	background-color: #F5F5F5;
 	color: black;
 	width: 600px;
+	height: 30px;
+	font-size:14px;
+	outline-width: 0;
+	font-family: courier;
+	border: 2px solid #000000;	
+}
+
+input#time {
+	background-color: #F5F5F5;
+	color: black;
+	width: 300px;
 	height: 30px;
 	font-size:14px;
 	outline-width: 0;

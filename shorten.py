@@ -4,11 +4,12 @@ import sys
 import sqlite3
 import string
 from termcolor import colored
+import datetime
 
 """
 future features:
 >> verify duplicate links [ done ]
->> auto expiry of url
+>> auto expiry of url [ done ]
 >> bulk url conversion
 >> copy to clipboard [ done ]
 >> spam detection
@@ -20,6 +21,8 @@ class urlShortner:
 		self.flag = False
 		self.uid = 0
 		self.base = "http://127.0.0.1:5000/"
+		self.auto_expiry_t = ''
+		self.t_base = ''
 
 	def getUrl(self):
 		self.url = input(colored('enter a url: ', 'white'))
@@ -59,8 +62,10 @@ class urlShortner:
 		if self.flag == False:
 			c.execute('''CREATE TABLE IF NOT EXISTS links
 						(uid INTEGER PRIMARY KEY, 
-						old_link TEXT, 
-						new_link TEXT)''')
+						old_link TEXT,
+						new_link TEXT,
+						tstamp TEXT,
+						texpiry TEXT)''')
 			count_old = c.execute("SELECT COUNT(old_link) FROM links WHERE old_link=?", (self.url,)).fetchone()[0]
 			count_new = c.execute("SELECT COUNT(new_link) FROM links WHERE new_link=?", (self.url,)).fetchone()[0]
 
@@ -69,7 +74,7 @@ class urlShortner:
 			elif count_new > 0:	
 				return (False, self.url)
 
-			c.execute("INSERT INTO links (old_link, new_link) VALUES (?,?)", (self.url, ' '))
+			c.execute("INSERT INTO links (old_link, new_link, tstamp, texpiry) VALUES (?,?,?,?)", (self.url, ' ', self.t_base, self.auto_expiry_t))
 
 			self.uid = c.execute("SELECT uid FROM links WHERE old_link=?", (self.url,)).fetchone()[0]
 			conn.commit()
@@ -103,8 +108,31 @@ class urlShortner:
 
 		print(colored("shortened link: ", "white"), colored(self.base, "red"))
 
-	def auto_expiry(self):
-		pass	
+	def has_expired(self, url):
+		conn = sqlite3.connect('./links.db')
+		c = conn.cursor()
+
+		values = c.execute("SELECT uid, tstamp, texpiry FROM links WHERE new_link=?", (url,)).fetchone()
+		is_expired = False
+
+		try:
+			if values[2] != 'None':
+				if datetime.datetime.strptime(values[2], "%d,%m,%y,%H,%M") < datetime.datetime.now():
+					is_expired = True
+
+			if is_expired:
+				c.execute("DELETE FROM links WHERE uid=?", (values[0],))
+
+			conn.commit()
+			conn.close()
+
+			return is_expired
+
+		except:
+			conn.commit()
+			conn.close()
+			
+			return is_expired
 
 	def execution(self):
 		self.getUrl()

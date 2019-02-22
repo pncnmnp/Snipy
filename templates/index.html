@@ -20,17 +20,30 @@
 
 	<form method="post" autocomplete="off">
 		<div class="query">
-			<label for="query"></label>
-			<input type="text" id="query" name="query" autofocus="autofocus" placeholder="Enter a link: ">
+			{% if error %}
+				<label for="query"></label>
+				<input type="text" id="query" name="query" autofocus="autofocus" placeholder="Enter a link">
+			{% endif %}
+		</div>
+
+		<br>
+
+		<div class="time">
+			{% if error %}
+				<input type="text" id="time" name="time" autofocus="autofocus" placeholder="Enter expiry time in minutes">
+			{% endif %}
 		</div>
 
 		<div class="query-request">
+			{% if error %}
 			<br>
 			<button type="submit">Shorten</button>
+			<br>
+			{% endif %}
 		</div>
+
 	</form>
 
-	<br>
 
 	<script>
 		function copyToClipboard(text) {
@@ -46,6 +59,8 @@
 		<br>
 		<br>
 		<button id="copy" onclick="copyToClipboard(document.getElementById('copy').innerHTML)">copy link</button>
+		<br>
+		<a href=".">↩</a>
 	{% endif %}
 
 	{% if other %}
@@ -54,6 +69,8 @@
 		<br>
 		<br>
 		<button id="copy" onclick="copyToClipboard(document.getElementById('copy').innerHTML)">copy link</button>
+		<br>
+		<a href=".">↩</a>
 	{% endif %}
 </body>
 </html>
