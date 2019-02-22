@@ -34,22 +34,26 @@
 
 	<script>
 		function copyToClipboard(text) {
-			window.prompt("Copy to clipboard: Ctrl+C, Enter", text);
+			var copyText = document.getElementById("copy");
+			copyText.select();
+			document.execCommand("copy");
 		}
 	</script>
 
 	{% if name %}
-		<b>Shortened link:</b> 
-			<a id='copy' href="{{name}}" target="_blank">{{ name }}</a>
-			<br>
-			<br>
-			<button id="copy" onclick="copyToClipboard(document.getElementById('copy').innerHTML)">copy link</button>
+		<center><b>Shortened link</b></center>
+		<textarea id="copy" class="copy">{{ name }}</textarea> 
+		<br>
+		<br>
+		<button id="copy" onclick="copyToClipboard(document.getElementById('copy').innerHTML)">copy link</button>
 	{% endif %}
 
 	{% if other %}
 		<center><b>{{ other }}</b></center>
-		<a href="{{val}}" target="_blank">{{ val }}</a>
+		<textarea id="copy" class="copy">{{ val }}</textarea> 
+		<br>
+		<br>
+		<button id="copy" onclick="copyToClipboard(document.getElementById('copy').innerHTML)">copy link</button>
 	{% endif %}
-
 </body>
 </html>
