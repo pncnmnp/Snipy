@@ -20,7 +20,6 @@ python3 -m pip install termcolor
 If you are hosting the site, change the static variable `base` and configure `redirection.py` file accordingly.
 
 To enable spam detection, you will need a valid API key.
-I am using [Google safe browsing API v4] [link].
-[link]: https://developers.google.com/safe-browsing/v4/get-started.
+I am using Google safe browsing API v4 : https://developers.google.com/safe-browsing/v4/get-started.
 
 Once you get a valid API KEY, enter the key in `api_key.txt` file and change file path in `api_key_file` parameter, in `redirection.py`.
