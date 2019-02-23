@@ -1,10 +1,10 @@
-import requests
-import socket
-import sys
 import sqlite3
 import string
+from requests import get
+from sys import exit
+from datetime import datetime
 from termcolor import colored
-import datetime
+from socket import gethostbyname, create_connection
 
 """
 future features:
@@ -27,37 +27,64 @@ class urlShortner:
 		self.t_base = ''
 
 	def getUrl(self):
+		"""
+		accepts url to be shortened
+		[ for command line testing ]
+		"""
 		self.url = input(colored('enter a url: ', 'white'))
 
 	def urlValidity(self):
+		"""
+		checks if internet is down or a client/server error has occured
+		[ for command line testing ]
+		"""
 		if self.isInternetWorking() == False:
 			print(colored('internet is down', 'red'))
-			sys.exit(0)
+			exit(0)
 
 		if self.isValid() >= 300:
 			print(colored('either an invalid url or a client/server error has occured', 'red'))
-			sys.exit(0)
+			exit(0)
 
 	def isInternetWorking(self):
+		"""
+		returns False if internet is down
+		"""
 		hostname = 'www.google.com'
 		try:
-			host = socket.gethostbyname(hostname)
+			host = gethostbyname(hostname)
 			# create_connection((host, port), timeout_value)
-			s = socket.create_connection((host, 80), 2)
+			s = create_connection((host, 80), 2)
 			return True
 
 		except:
 			return False
 
 	def isValid(self):
+		"""
+		returns status code of url
+		"""
 		try:
-			r = requests.get(self.url)
+			r = get(self.url)
 			return int(r.status_code)
 
 		except:
 			return False
 
 	def dbFetchStore(self):
+		"""
+		divided into 2 parts:
+		flag is False:	creates a database with attributes (uid, old_link, new_link, tstamp, texpiry, views)
+						checks if url is a part of old_link or new_link ( duplication check )
+						gets the new uid for link shortening
+
+						returns True if unique url
+						returns False with new_url if url already in database
+
+		flag is True:	updates the db with new_url given uid
+
+		[ flag indicates whether url is shortened ]
+		"""
 		conn = sqlite3.connect('./links.db')
 		c = conn.cursor()
 
@@ -92,6 +119,10 @@ class urlShortner:
 			conn.close()
 
 	def shortenUrl(self):
+		"""
+		returns base 62 encoding of url
+		flag becomes True
+		"""
 		uid = self.uid
 
 		keys = string.ascii_lowercase+string.ascii_uppercase+string.digits
@@ -110,8 +141,12 @@ class urlShortner:
 		self.flag = True
 
 		print(colored("shortened link: ", "white"), colored(self.base, "red"))
+		return self.base
 
 	def has_expired(self, url):
+		"""
+		returns True if url has expired and deletes the row from db
+		"""
 		conn = sqlite3.connect('./links.db')
 		c = conn.cursor()
 
@@ -120,7 +155,7 @@ class urlShortner:
 
 		try:
 			if values[2] != 'None':
-				if datetime.datetime.strptime(values[2], "%d,%m,%y,%H,%M") < datetime.datetime.now():
+				if datetime.strptime(values[2], "%d,%m,%y,%H,%M") < datetime.now():
 					is_expired = True
 
 			if is_expired:
@@ -138,6 +173,10 @@ class urlShortner:
 			return is_expired
 
 	def execution(self):
+		"""
+		flow of execution of class
+		[ for command line testing ]
+		"""
 		self.getUrl()
 		self.urlValidity()
 		self.dbFetchStore() # for fetching uid
