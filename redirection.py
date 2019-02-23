@@ -29,12 +29,21 @@ spam_msg_malware = "Warning—The web-site you are trying to shorten may harm yo
 spam_msg_phishing = "Warning—The web-site you are trying to shorten may be Deceptive. Attackers on site may trick you into doing something dangerous like installing software or revealing your personal information (for example, passwords, phone numbers, or credit cards)."
 spam_msg_2 = "This service uses Google's safe browsing API."
 spam_msg_3 = "Google works to provide the most accurate and up-to-date information about unsafe web resources. However, Google cannot guarantee that its information is comprehensive and error-free: some risky sites may not be identified, and some safe sites may be identified in error."
-api_key_file = "./api_key.txt"
+
+# Note: for testing purposes my api key was in a different directory
+# Remove '../' and replace it with './' to reference to current directory's api_key.txt file
+# Don't forget to add your API KEY in api_key.txt
+api_key_file = "../api_key.txt"
 
 app = Flask(__name__)
 
 @app.route('/<name>', methods=['GET'])
 def direct(name):
+	"""
+	returns the redirected link
+	checks for expired links
+	updates the view count
+	"""
 	base = shorten.urlShortner().base
 
 	# To check for expired urls in database
@@ -63,27 +72,74 @@ def direct(name):
 
 @app.route('/', methods=['POST', 'GET'])
 def index():
+	"""
+	returns index.html with appropriate response
+	initializes timestamps
+	checks for custom url
+	The following detection takes place here:
+	>> spam
+	>> expired url 
+	>> url validity
+	>> duplicate url
+	"""
 	error = True
 	if request.method == 'POST':
 		if request.form['query']:
-			# try:
-			s_obj = shorten.urlShortner()
-			url = request.form['query']
+			try:
+				s_obj = shorten.urlShortner()
+				url = request.form['query']
 
-			# comment the code  below if you hate the easter egg
-			if len(set(url.split('/')).intersection(set(['goo.gl', 'bit.ly', 't.co']))) > 0:
-				return render_template('index.html', yoda_says="You must unlearn what you have learned! ", mortal_taunt="Shoo away cunning mortal!")
+				# comment the code  below if you hate the easter egg
+				if len(set(url.split('/')).intersection(set(['goo.gl', 'bit.ly', 't.co']))) > 0:
+					return render_template('index.html', yoda_says="You must unlearn what you have learned! ", mortal_taunt="Shoo away cunning mortal!")
 
-			# get the current and expiry time
-			s_obj.t_base = (datetime.datetime.now()).strftime("%d,%m,%y,%H,%M")
-			if request.form['time'] != '':
-				s_obj.auto_expiry_t = (datetime.datetime.now() + datetime.timedelta(minutes = int(request.form['time']))).strftime("%d,%m,%y,%H,%M")
-			else:
-				s_obj.auto_expiry_t = 'None'
+				# get the current and expiry time
+				s_obj.t_base = (datetime.datetime.now()).strftime("%d,%m,%y,%H,%M")
+				if request.form['time'] != '':
+					s_obj.auto_expiry_t = (datetime.datetime.now() + datetime.timedelta(minutes = int(request.form['time']))).strftime("%d,%m,%y,%H,%M")
+				else:
+					s_obj.auto_expiry_t = 'None'
 
-			# for custom url
-			if len(url.split(',')) > 1:
-				s_obj.url = (url.split(',')[0]).strip()
+				# for custom url
+				if len(url.split(',')) > 1:
+					s_obj.url = (url.split(',')[0]).strip()
+
+					# check if link is spam or not
+					isSpam = spam_detection.isSpam(api_key_file, s_obj.url)
+					if isSpam[0]:
+						if isSpam[1] == "MALWARE":
+							return render_template('index.html', mw_1=spam_msg_malware, mw_2=spam_msg_2, mw_3=spam_msg_3)
+						elif isSpam[1] == "SOCIAL_ENGINEERING":
+							return render_template('index.html', mw_1=spam_msg_phishing, mw_2=spam_msg_2, mw_3=spam_msg_3)
+
+					validity = s_obj.isValid(s_obj.url)
+
+					if validity == False:
+						return render_template('index.html', other="link is invalid")
+
+					s_obj.base += (url.split(',')[1]).strip()
+
+					if s_obj.isCustomUrl() == False:
+						check = s_obj.dbFetchStore()
+
+						if check[0] == True:
+							s_obj.flag = True
+							true_check(s_obj)
+							return render_template('index.html', name=s_obj.base)
+
+						elif check[0] == False:
+							expired = false_check(s_obj, check[1])
+
+							if expired:
+								return error_400
+
+							# if not expired, yet link is duplicate
+							return render_template('index.html', other="link is already shortened: ", val=check[1])
+
+					elif s_obj.isCustomUrl() == True:
+							return render_template('index.html', other="link is already shortened: ", val=s_obj.base)
+
+				s_obj.url = url.strip()
 
 				# check if link is spam or not
 				isSpam = spam_detection.isSpam(api_key_file, s_obj.url)
@@ -93,66 +149,29 @@ def index():
 					elif isSpam[1] == "SOCIAL_ENGINEERING":
 						return render_template('index.html', mw_1=spam_msg_phishing, mw_2=spam_msg_2, mw_3=spam_msg_3)
 
-				validity = s_obj.isValid(s_obj.url)
+				validity = s_obj.isValid(url)
 
 				if validity == False:
 					return render_template('index.html', other="link is invalid")
 
-				s_obj.base += (url.split(',')[1]).strip()
+				# if check is True: link is not duplicate
+				# if check is False: link is duplicate
+				check = s_obj.dbFetchStore() # for fetching uid
 
-				if s_obj.isCustomUrl() == False:
-					check = s_obj.dbFetchStore()
+				if check[0] == True:
+					true_check(s_obj)
+					return render_template('index.html', name=s_obj.base)
 
-					if check[0] == True:
-						s_obj.flag = True
-						true_check(s_obj)
-						return render_template('index.html', name=s_obj.base)
+				elif check[0] == False:
+					expired = false_check(s_obj, check[1])
 
-					elif check[0] == False:
-						expired = false_check(s_obj, check[1])
+					if expired:
+						return error_400
 
-						if expired:
-							return error_400
-
-						# if not expired, yet link is duplicate
-						return render_template('index.html', other="link is already shortened: ", val=check[1])
-
-				elif s_obj.isCustomUrl() == True:
-						return render_template('index.html', other="link is already shortened: ", val=s_obj.base)
-
-			s_obj.url = url.strip()
-
-			# check if link is spam or not
-			isSpam = spam_detection.isSpam(api_key_file, s_obj.url)
-			if isSpam[0]:
-				if isSpam[1] == "MALWARE":
-					return render_template('index.html', mw_1=spam_msg_malware, mw_2=spam_msg_2, mw_3=spam_msg_3)
-				elif isSpam[1] == "SOCIAL_ENGINEERING":
-					return render_template('index.html', mw_1=spam_msg_phishing, mw_2=spam_msg_2, mw_3=spam_msg_3)
-
-			validity = s_obj.isValid(url)
-
-			if validity == False:
-				return render_template('index.html', other="link is invalid")
-
-			# if check is True: link is not duplicate
-			# if check is False: link is duplicate
-			check = s_obj.dbFetchStore() # for fetching uid
-
-			if check[0] == True:
-				true_check(s_obj)
-				return render_template('index.html', name=s_obj.base)
-
-			elif check[0] == False:
-				expired = false_check(s_obj, check[1])
-
-				if expired:
-					return error_400
-
-				# if not expired, yet link is duplicate
-				return render_template('index.html', other="link is already shortened: ", val=check[1])
-			# except:
-			# 	return error_500
+					# if not expired, yet link is duplicate
+					return render_template('index.html', other="link is already shortened: ", val=check[1])
+			except:
+				return error_500
 
 	return render_template('index.html', error=error)
 
