@@ -10,9 +10,11 @@ import datetime
 future features:
 >> verify duplicate links [ done ]
 >> auto expiry of url [ done ]
->> bulk url conversion
+>> multi link url conversion
 >> copy to clipboard [ done ]
 >> spam detection
+>> load balancer friendly
+>> number of views [ done ]
 """
 
 class urlShortner:
@@ -65,7 +67,8 @@ class urlShortner:
 						old_link TEXT,
 						new_link TEXT,
 						tstamp TEXT,
-						texpiry TEXT)''')
+						texpiry TEXT,
+						views INTEGER)''')
 			count_old = c.execute("SELECT COUNT(old_link) FROM links WHERE old_link=?", (self.url,)).fetchone()[0]
 			count_new = c.execute("SELECT COUNT(new_link) FROM links WHERE new_link=?", (self.url,)).fetchone()[0]
 
@@ -74,7 +77,7 @@ class urlShortner:
 			elif count_new > 0:	
 				return (False, self.url)
 
-			c.execute("INSERT INTO links (old_link, new_link, tstamp, texpiry) VALUES (?,?,?,?)", (self.url, ' ', self.t_base, self.auto_expiry_t))
+			c.execute("INSERT INTO links (old_link, new_link, tstamp, texpiry, views) VALUES (?,?,?,?,?)", (self.url, ' ', self.t_base, self.auto_expiry_t, 0))
 
 			self.uid = c.execute("SELECT uid FROM links WHERE old_link=?", (self.url,)).fetchone()[0]
 			conn.commit()
@@ -131,7 +134,7 @@ class urlShortner:
 		except:
 			conn.commit()
 			conn.close()
-			
+
 			return is_expired
 
 	def execution(self):

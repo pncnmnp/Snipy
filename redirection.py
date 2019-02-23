@@ -43,12 +43,14 @@ def direct(name):
 
 	error = None
 	try:
-		link = c.execute("SELECT old_link FROM links WHERE new_link=?", (base+name,)).fetchone()[0]
+		meta = c.execute("SELECT old_link, views FROM links WHERE new_link=?", (base+name,)).fetchone()
+		# updating the view count
+		c.execute("UPDATE links SET views=? WHERE old_link=?", (meta[1]+1, meta[0]))
 
 		conn.commit()
 		conn.close()
 
-		return redirect(link, code=302)
+		return redirect(meta[0], code=302)
 
 	except:
 		return error_404
@@ -58,38 +60,42 @@ def index():
 	error = True
 	if request.method == 'POST':
 		if request.form['query']:
-			try:
-				s_obj = shorten.urlShortner()
-				url = request.form['query']
+			# try:
+			s_obj = shorten.urlShortner()
+			url = request.form['query']
 
-				# get the current and expiry time
-				s_obj.t_base = (datetime.datetime.now()).strftime("%d,%m,%y,%H,%M")
-				if request.form['time'] != '':
-					s_obj.auto_expiry_t = (datetime.datetime.now() + datetime.timedelta(minutes = int(request.form['time']))).strftime("%d,%m,%y,%H,%M")
-				else:
-					s_obj.auto_expiry_t = 'None'
+			# comment the below code if you hate the easter egg
+			if len(set(url.split('/')).intersection(set(['goo.gl', 'bit.ly', 't.co']))) > 0:
+				return render_template('index.html', yoda_says="You must unlearn what you have learned! ", mortal_taunt="Shoo away cunning mortal!")
 
-				s_obj.url = url.strip();
-				check = s_obj.dbFetchStore() # for fetching uid
+			# get the current and expiry time
+			s_obj.t_base = (datetime.datetime.now()).strftime("%d,%m,%y,%H,%M")
+			if request.form['time'] != '':
+				s_obj.auto_expiry_t = (datetime.datetime.now() + datetime.timedelta(minutes = int(request.form['time']))).strftime("%d,%m,%y,%H,%M")
+			else:
+				s_obj.auto_expiry_t = 'None'
 
-				if check[0] == True:
-					s_obj.shortenUrl()
-					s_obj.dbFetchStore() # for storing shortened link
+			s_obj.url = url.strip();
+			check = s_obj.dbFetchStore() # for fetching uid
 
-					return render_template('index.html', name=s_obj.base)
+			if check[0] == True:
+				s_obj.shortenUrl()
+				s_obj.dbFetchStore() # for storing shortened link
 
-				elif check[0] == False:
-					# To check for expired urls in database
-					base = shorten.urlShortner().base
-					s_exp_obj = shorten.urlShortner()
-					expired = s_exp_obj.has_expired(check[1])
+				return render_template('index.html', name=s_obj.base)
 
-					if expired:
-						return error_404
+			elif check[0] == False:
+				# To check for expired urls in database
+				base = shorten.urlShortner().base
+				s_exp_obj = shorten.urlShortner()
+				expired = s_exp_obj.has_expired(check[1])
 
-					return render_template('index.html', other="link is already shortened: ", val=check[1])
-			except:
-				return error_500
+				if expired:
+					return error_404
+
+				return render_template('index.html', other="link is already shortened: ", val=check[1])
+			# except:
+			# 	return error_500
 
 	return render_template('index.html', error=error)
 
