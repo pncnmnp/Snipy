@@ -10,9 +10,9 @@ from socket import gethostbyname, create_connection
 future features:
 >> verify duplicate links [ done ]
 >> auto expiry of url [ done ]
->> multi link url conversion
+>> multi link url conversion [ will not provide this feature ]
 >> copy to clipboard [ done ]
->> spam detection
+>> spam detection [ done ]
 >> load balancer friendly
 >> number of views [ done ]
 >> customize url [ done ]

@@ -2,6 +2,7 @@ from flask import Flask, redirect, request, render_template
 import sqlite3
 import shorten
 import datetime
+import spam_detection
 
 """
 To run server :
@@ -24,6 +25,11 @@ After much thought, I choose the 1st option.
 
 error_400 = "ERROR 400: link does not exist<br/>looks like you have gone crazy 😜"
 error_500 = "ERROR 500: internal server error<br/>looks like i have gone crazy 😭"
+spam_msg_malware = "Warning—The web-site you are trying to shorten may harm your computer. This page appears to contain malicious code that could be downloaded to your computer without your consent."
+spam_msg_phishing = "Warning—The web-site you are trying to shorten may be Deceptive. Attackers on site may trick you into doing something dangerous like installing software or revealing your personal information (for example, passwords, phone numbers, or credit cards)."
+spam_msg_2 = "This service uses Google's safe browsing API."
+spam_msg_3 = "Google works to provide the most accurate and up-to-date information about unsafe web resources. However, Google cannot guarantee that its information is comprehensive and error-free: some risky sites may not be identified, and some safe sites may be identified in error."
+api_key_file = "./api_key.txt"
 
 app = Flask(__name__)
 
@@ -79,6 +85,14 @@ def index():
 			if len(url.split(',')) > 1:
 				s_obj.url = (url.split(',')[0]).strip()
 
+				# check if link is spam or not
+				isSpam = spam_detection.isSpam(api_key_file, s_obj.url)
+				if isSpam[0]:
+					if isSpam[1] == "MALWARE":
+						return render_template('index.html', mw_1=spam_msg_malware, mw_2=spam_msg_2, mw_3=spam_msg_3)
+					elif isSpam[1] == "SOCIAL_ENGINEERING":
+						return render_template('index.html', mw_1=spam_msg_phishing, mw_2=spam_msg_2, mw_3=spam_msg_3)
+
 				validity = s_obj.isValid(s_obj.url)
 
 				if validity == False:
@@ -107,6 +121,15 @@ def index():
 						return render_template('index.html', other="link is already shortened: ", val=s_obj.base)
 
 			s_obj.url = url.strip()
+
+			# check if link is spam or not
+			isSpam = spam_detection.isSpam(api_key_file, s_obj.url)
+			if isSpam[0]:
+				if isSpam[1] == "MALWARE":
+					return render_template('index.html', mw_1=spam_msg_malware, mw_2=spam_msg_2, mw_3=spam_msg_3)
+				elif isSpam[1] == "SOCIAL_ENGINEERING":
+					return render_template('index.html', mw_1=spam_msg_phishing, mw_2=spam_msg_2, mw_3=spam_msg_3)
+
 			validity = s_obj.isValid(url)
 
 			if validity == False:
