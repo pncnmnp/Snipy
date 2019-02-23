@@ -15,6 +15,7 @@ future features:
 >> spam detection
 >> load balancer friendly
 >> number of views [ done ]
+>> customize url [ done ]
 """
 
 class urlShortner:
@@ -42,7 +43,7 @@ class urlShortner:
 			print(colored('internet is down', 'red'))
 			exit(0)
 
-		if self.isValid() >= 300:
+		if self.isValid(url=self.url) >= 300:
 			print(colored('either an invalid url or a client/server error has occured', 'red'))
 			exit(0)
 
@@ -60,12 +61,12 @@ class urlShortner:
 		except:
 			return False
 
-	def isValid(self):
+	def isValid(self, url=''):
 		"""
 		returns status code of url
 		"""
 		try:
-			r = get(self.url)
+			r = get(url)
 			return int(r.status_code)
 
 		except:
@@ -117,6 +118,18 @@ class urlShortner:
 
 			conn.commit()
 			conn.close()
+
+	def isCustomUrl(self):
+		"""
+		returns True if custom url is taken
+		"""
+		conn = sqlite3.connect('./links.db')
+		c = conn.cursor()
+
+		if c.execute("SELECT uid FROM links WHERE new_link=?", (self.base,)).fetchone() != None:
+			return True
+
+		return False
 
 	def shortenUrl(self):
 		"""

@@ -32,6 +32,11 @@ input#time {
 	border: 2px solid #000000;	
 }
 
+div#custom_link {
+	display:none;
+	font-family: courier;
+}
+
 textarea {
 	width: 300px;
 	height: 19px;

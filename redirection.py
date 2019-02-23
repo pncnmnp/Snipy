@@ -22,7 +22,7 @@ There were 2 choices:
 After much thought, I choose the 1st option.
 """
 
-error_404 = "ERROR 404: link does not exist<br/>looks like you have gone crazy 😜"
+error_400 = "ERROR 400: link does not exist<br/>looks like you have gone crazy 😜"
 error_500 = "ERROR 500: internal server error<br/>looks like i have gone crazy 😭"
 
 app = Flask(__name__)
@@ -36,7 +36,7 @@ def direct(name):
 	expired = s_exp_obj.has_expired(base+name)
 
 	if expired:
-		return error_404
+		return error_400
 
 	conn = sqlite3.connect('./links.db')
 	c = conn.cursor()
@@ -53,55 +53,97 @@ def direct(name):
 		return redirect(meta[0], code=302)
 
 	except:
-		return error_404
+		return error_400
 
 @app.route('/', methods=['POST', 'GET'])
 def index():
 	error = True
 	if request.method == 'POST':
 		if request.form['query']:
-			try:
-				s_obj = shorten.urlShortner()
-				url = request.form['query']
+			# try:
+			s_obj = shorten.urlShortner()
+			url = request.form['query']
 
-				# comment the code  below if you hate the easter egg
-				if len(set(url.split('/')).intersection(set(['goo.gl', 'bit.ly', 't.co']))) > 0:
-					return render_template('index.html', yoda_says="You must unlearn what you have learned! ", mortal_taunt="Shoo away cunning mortal!")
+			# comment the code  below if you hate the easter egg
+			if len(set(url.split('/')).intersection(set(['goo.gl', 'bit.ly', 't.co']))) > 0:
+				return render_template('index.html', yoda_says="You must unlearn what you have learned! ", mortal_taunt="Shoo away cunning mortal!")
 
-				# get the current and expiry time
-				s_obj.t_base = (datetime.datetime.now()).strftime("%d,%m,%y,%H,%M")
-				if request.form['time'] != '':
-					s_obj.auto_expiry_t = (datetime.datetime.now() + datetime.timedelta(minutes = int(request.form['time']))).strftime("%d,%m,%y,%H,%M")
-				else:
-					s_obj.auto_expiry_t = 'None'
+			# get the current and expiry time
+			s_obj.t_base = (datetime.datetime.now()).strftime("%d,%m,%y,%H,%M")
+			if request.form['time'] != '':
+				s_obj.auto_expiry_t = (datetime.datetime.now() + datetime.timedelta(minutes = int(request.form['time']))).strftime("%d,%m,%y,%H,%M")
+			else:
+				s_obj.auto_expiry_t = 'None'
 
-				s_obj.url = url.strip();
+			# for custom url
+			if len(url.split(',')) > 1:
+				s_obj.url = (url.split(',')[0]).strip()
 
-				# if check is True: link is not duplicate
-				# if check is False: link is duplicate
-				check = s_obj.dbFetchStore() # for fetching uid
+				validity = s_obj.isValid(s_obj.url)
 
-				if check[0] == True:
-					s_obj.shortenUrl()
-					s_obj.dbFetchStore() # for storing shortened link
+				if validity == False:
+					return render_template('index.html', other="link is invalid")
 
-					return render_template('index.html', name=s_obj.base)
+				s_obj.base += (url.split(',')[1]).strip()
 
-				elif check[0] == False:
-					# To check for expired urls in database
-					base = shorten.urlShortner().base
-					s_exp_obj = shorten.urlShortner()
-					expired = s_exp_obj.has_expired(check[1])
+				if s_obj.isCustomUrl() == False:
+					check = s_obj.dbFetchStore()
 
-					if expired:
-						return error_404
+					if check[0] == True:
+						s_obj.flag = True
+						true_check(s_obj)
+						return render_template('index.html', name=s_obj.base)
 
-					# if not expired, yet link is duplicate
-					return render_template('index.html', other="link is already shortened: ", val=check[1])
-			except:
-				return error_500
+					elif check[0] == False:
+						expired = false_check(s_obj, check[1])
+
+						if expired:
+							return error_400
+
+						# if not expired, yet link is duplicate
+						return render_template('index.html', other="link is already shortened: ", val=check[1])
+
+				elif s_obj.isCustomUrl() == True:
+						return render_template('index.html', other="link is already shortened: ", val=s_obj.base)
+
+			s_obj.url = url.strip()
+			validity = s_obj.isValid(url)
+
+			if validity == False:
+				return render_template('index.html', other="link is invalid")
+
+			# if check is True: link is not duplicate
+			# if check is False: link is duplicate
+			check = s_obj.dbFetchStore() # for fetching uid
+
+			if check[0] == True:
+				true_check(s_obj)
+				return render_template('index.html', name=s_obj.base)
+
+			elif check[0] == False:
+				expired = false_check(s_obj, check[1])
+
+				if expired:
+					return error_400
+
+				# if not expired, yet link is duplicate
+				return render_template('index.html', other="link is already shortened: ", val=check[1])
+			# except:
+			# 	return error_500
 
 	return render_template('index.html', error=error)
+
+def true_check(s_obj):
+	# To check whether custom url is used
+	if s_obj.flag == False:
+		s_obj.shortenUrl()
+	s_obj.dbFetchStore() # for storing shortened link
+
+def false_check(s_obj, link):
+	# To check for expired urls in database
+	base = shorten.urlShortner().base
+	s_exp_obj = shorten.urlShortner()
+	return s_exp_obj.has_expired(link)
 
 if __name__ == '__main__':
 	port = int(os.environ.get('PORT', 5000))

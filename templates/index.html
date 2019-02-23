@@ -42,6 +42,21 @@
 			{% endif %}
 		</div>
 
+		{% if error %}
+			<script>
+				function showhide(id) {
+					var e = document.getElementById(id);
+					e.style.display = (e.style.display == 'block') ? 'none' : 'block';
+				}
+			</script>
+			<br>
+			<a href="javascript:showhide('custom_link')">❓</a>
+			<div id="custom_link">
+				Use ',' to separate link with your custom link choice
+				<br>
+				Example: 'https://www.google.com, goog' will point to 'base_url/goog'
+			</div>
+		{% endif %}
 	</form>
 
 
