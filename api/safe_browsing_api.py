@@ -36,12 +36,17 @@ class Safe_Browsing_API:
 	def check(self, url, wasTemp=False):
 		"""
 		returns True if url is malicious
+		url    : is the malicious link to be stored in bitarray
+		wasTemp: initialize it to True if while storing the url,
+		         'remove' variable was True
+		         default: wasTemp = False
 		"""
 		# seed is kept local to prevent tampering
 		seed = [11, 13, 17, 19, 23]
 		for hashing in range(self.k):
 			if self.bit_arr[mmh3.hash(url, seed[hashing])%self.n] == 0:
 				return False
+		
 		if wasTemp == False:
 			return True
 

@@ -31,4 +31,6 @@ flask run
 ```
 To run flask server locally.
 
+The `api` dir contains an implementation of Safe Browsing API using bloom filters, which can be used to temporarily block links causing unnecessary load on server, or some user requested malicious links.
+
 This code was tested on Linux : Ubuntu ( 18.04 LTS ) 
