@@ -9,6 +9,9 @@ Features:
 * number of views
 * customize url
 
+### In Action
+![url_shorten_demo](https://github.com/pncnmnp/Snipy/blob/master/screenshots/url_shorten_demo.gif)
+
 ### How to run the code
 sqlite3, termcolor and flask can be installed using:
 ```
